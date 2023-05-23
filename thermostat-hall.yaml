@@ -1,0 +1,10 @@
+# THERMOSTAT HY02B05 TYUA
+substitutions:
+  hostname: "thermostat-hall"
+  device_verbose_name: "Thermostat_hall"  
+  key_api: " "
+  password_ota: " "
+  wifi_use_address:  
+
+packages:
+  device: !include device-thermostat-HY02B05.yaml     

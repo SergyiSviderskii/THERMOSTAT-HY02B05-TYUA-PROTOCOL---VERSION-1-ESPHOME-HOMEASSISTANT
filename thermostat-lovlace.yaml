@@ -1,0 +1,526 @@
+// THERMOSTAT HY02B05 TYUA PROTOCOL VERSION 1
+type: vertical-stack
+cards:
+  - show_name: true
+    show_icon: true
+    type: button
+    tap_action:
+      action: none
+    entity: sensor.thermostat_hall_version
+    show_state: true
+    icon_height: 20px
+    hold_action:
+      action: none
+  - type: conditional
+    conditions:
+      - entity: sensor.thermostat_hall_error
+        state_not: 'No'
+      - entity: sensor.thermostat_hall_error
+        state_not: unavailable
+      - entity: sensor.thermostat_hall_error
+        state_not: unknown
+    card:
+      show_name: true
+      show_icon: true
+      type: button
+      tap_action:
+        action: none
+      entity: sensor.thermostat_hall_error
+      name: error
+      show_state: true
+      icon_height: 20px
+      hold_action:
+        action: more-info
+  - type: vertical-stack
+    cards:
+      - type: conditional
+        conditions:
+          - entity: switch.thermostat_hall_setting
+            state_not: 'on'
+        card:
+          type: vertical-stack
+          cards:
+            - type: horizontal-stack
+              cards:
+                - show_name: true
+                  show_icon: true
+                  type: button
+                  tap_action:
+                    action: none
+                  entity: sensor.thermostat_hall_uptime
+                  show_state: true
+                  icon_height: 20px
+                  name: uptime
+                - show_name: true
+                  show_icon: true
+                  type: button
+                  tap_action:
+                    action: none
+                  icon_height: 20px
+                  name: external
+                  show_state: true
+                  entity: sensor.thermostat_hall_external_temperature
+                - show_name: true
+                  show_icon: true
+                  type: button
+                  tap_action:
+                    action: none
+                  entity: sensor.thermostat_hall_voltage_esp
+                  name: esp
+                  icon_height: 20px
+                  show_state: true
+                - show_name: true
+                  show_icon: true
+                  type: button
+                  tap_action:
+                    action: none
+                  entity: sensor.thermostat_hall_wifi
+                  show_state: true
+                  icon_height: 20px
+                  name: wifi
+            - type: thermostat
+              entity: climate.thermostat_hall
+            - type: conditional
+              conditions:
+                - entity: select.thermostat_hall_mode
+                  state: Holiday
+                - entity: switch.thermostat_hall_power
+                  state: 'on'
+              card:
+                type: horizontal-stack
+                cards:
+                  - show_name: false
+                    show_icon: false
+                    type: button
+                    tap_action:
+                      action: none
+                    entity: number.thermostat_hall_vacation_days
+                    show_state: true
+                    icon_height: 20px
+                  - show_name: false
+                    show_icon: false
+                    type: button
+                    tap_action:
+                      action: none
+                    entity: number.thermostat_hall_vacation_temperature
+                    show_state: true
+                    icon_height: 20px
+  - type: horizontal-stack
+    cards:
+      - type: conditional
+        conditions:
+          - entity: switch.thermostat_hall_setting
+            state_not: 'on'
+        card:
+          show_name: false
+          show_icon: true
+          type: button
+          tap_action:
+            action: none
+          entity: switch.thermostat_hall_power
+          icon_height: 20px
+          hold_action:
+            action: toggle
+      - type: conditional
+        conditions:
+          - entity: switch.thermostat_hall_setting
+            state_not: 'on'
+        card:
+          show_name: false
+          show_icon: false
+          type: button
+          tap_action:
+            action: call-service
+            service: select.select_option
+            target:
+              entity_id: select.thermostat_hall_mode
+            data:
+              option: Manual
+          entity: select.thermostat_hall_mode
+          show_state: true
+          hold_action:
+            action: call-service
+            service: select.select_option
+            target:
+              entity_id: select.thermostat_hall_mode
+            data:
+              option: Holiday
+      - type: conditional
+        conditions:
+          - entity: switch.thermostat_hall_setting
+            state_not: 'on'
+        card:
+          show_name: false
+          show_icon: true
+          type: button
+          tap_action:
+            action: none
+          entity: switch.thermostat_hall_lock
+          icon_height: 20px
+          hold_action:
+            action: toggle
+      - type: horizontal-stack
+        cards:
+          - type: conditional
+            conditions:
+              - entity: switch.thermostat_hall_setting_points
+                state_not: 'on'
+            card:
+              show_name: false
+              show_icon: true
+              type: button
+              tap_action:
+                action: none
+              entity: switch.thermostat_hall_setting
+              icon_height: 20px
+              hold_action:
+                action: toggle
+          - type: conditional
+            conditions:
+              - entity: switch.thermostat_hall_wor_points
+                state: 'off'
+              - entity: switch.thermostat_hall_week_points
+                state: 'off'
+              - entity: switch.thermostat_hall_setting
+                state: 'on'
+            card:
+              show_name: false
+              show_icon: true
+              type: button
+              tap_action:
+                action: none
+              entity: switch.thermostat_hall_setting_points
+              icon_height: 20px
+              hold_action:
+                action: toggle
+  - type: conditional
+    conditions:
+      - entity: switch.thermostat_hall_setting
+        state: 'on'
+      - entity: switch.thermostat_hall_setting_points
+        state: 'off'
+    card:
+      type: entities
+      entities:
+        - entity: select.thermostat_hall_options_control
+        - entity: number.thermostat_hall_calibration_sensor
+        - entity: switch.thermostat_hall_high_protection
+        - entity: number.thermostat_hall_high_external
+        - entity: switch.thermostat_hall_low_protection
+        - entity: number.thermostat_hall_low_external
+        - entity: number.thermostat_hall_working_hysteresis
+        - entity: number.thermostat_hall_high_hysteresis_external
+        - entity: select.thermostat_hall_turn_on_state
+        - entity: number.thermostat_hall_max_temperature
+        - entity: number.thermostat_hall_min_temperature
+        - entity: select.thermostat_hall_select_week
+      show_header_toggle: false
+  - type: conditional
+    conditions:
+      - entity: switch.thermostat_hall_setting_points
+        state: 'on'
+    card:
+      type: vertical-stack
+      cards:
+        - type: conditional
+          conditions:
+            - entity: select.thermostat_hall_select_week
+              state_not: 7 days
+            - entity: switch.thermostat_hall_week_points
+              state: 'off'
+          card:
+            type: vertical-stack
+            cards:
+              - type: horizontal-stack
+                cards:
+                  - show_name: true
+                    show_icon: true
+                    type: button
+                    tap_action:
+                      action: none
+                    entity: switch.thermostat_hall_wor_points
+                    icon_height: 20px
+                    hold_action:
+                      action: toggle
+                    name: workers
+                  - type: conditional
+                    conditions:
+                      - entity: switch.thermostat_hall_cansel
+                        state: 'on'
+                    card:
+                      type: horizontal-stack
+                      cards:
+                        - show_name: false
+                          show_icon: true
+                          type: button
+                          tap_action:
+                            action: none
+                          entity: switch.thermostat_hall_cansel
+                          icon_height: 20px
+                          hold_action:
+                            action: toggle
+                        - show_name: false
+                          show_icon: true
+                          type: button
+                          tap_action:
+                            action: none
+                          entity: switch.thermostat_hall_save
+                          icon_height: 20px
+                          hold_action:
+                            action: toggle
+              - type: conditional
+                conditions:
+                  - entity: switch.thermostat_hall_wor_points
+                    state: 'on'
+                card:
+                  type: vertical-stack
+                  cards:
+                    - show_name: false
+                      show_icon: true
+                      show_state: true
+                      type: glance
+                      entities:
+                        - number.thermostat_hall_hour_1
+                        - number.thermostat_hall_minutes_1
+                        - number.thermostat_hall_temperature_1
+                    - show_name: false
+                      show_icon: true
+                      show_state: true
+                      type: glance
+                      entities:
+                        - number.thermostat_hall_hour_2
+                        - number.thermostat_hall_minutes_2
+                        - number.thermostat_hall_temperature_2
+                    - show_name: false
+                      show_icon: true
+                      show_state: true
+                      type: glance
+                      entities:
+                        - number.thermostat_hall_hour_3
+                        - number.thermostat_hall_minutes_3
+                        - number.thermostat_hall_temperature_3
+                    - show_name: false
+                      show_icon: true
+                      show_state: true
+                      type: glance
+                      entities:
+                        - number.thermostat_hall_hour_4
+                        - number.thermostat_hall_minutes_4
+                        - number.thermostat_hall_temperature_4
+                    - show_name: false
+                      show_icon: true
+                      show_state: true
+                      type: glance
+                      entities:
+                        - number.thermostat_hall_hour_5
+                        - number.thermostat_hall_minutes_5
+                        - number.thermostat_hall_temperature_5
+                    - show_name: false
+                      show_icon: true
+                      show_state: true
+                      type: glance
+                      entities:
+                        - number.thermostat_hall_hour_6
+                        - number.thermostat_hall_minutes_6
+                        - number.thermostat_hall_temperature_6
+        - type: conditional
+          conditions:
+            - entity: select.thermostat_hall_select_week
+              state_not: 7 days
+            - entity: switch.thermostat_hall_wor_points
+              state: 'off'
+          card:
+            type: vertical-stack
+            cards:
+              - type: horizontal-stack
+                cards:
+                  - show_name: true
+                    show_icon: true
+                    type: button
+                    tap_action:
+                      action: none
+                    entity: switch.thermostat_hall_week_points
+                    icon_height: 20px
+                    hold_action:
+                      action: toggle
+                    name: weekend
+                  - type: conditional
+                    conditions:
+                      - entity: switch.thermostat_hall_cansel
+                        state: 'on'
+                    card:
+                      type: horizontal-stack
+                      cards:
+                        - show_name: false
+                          show_icon: true
+                          type: button
+                          tap_action:
+                            action: none
+                          entity: switch.thermostat_hall_cansel
+                          icon_height: 20px
+                          hold_action:
+                            action: toggle
+                        - show_name: false
+                          show_icon: true
+                          type: button
+                          tap_action:
+                            action: none
+                          entity: switch.thermostat_hall_save
+                          icon_height: 20px
+                          hold_action:
+                            action: toggle
+              - type: conditional
+                conditions:
+                  - entity: switch.thermostat_hall_week_points
+                    state: 'on'
+                card:
+                  type: vertical-stack
+                  cards:
+                    - show_name: false
+                      show_icon: true
+                      show_state: true
+                      type: glance
+                      entities:
+                        - number.thermostat_hall_hour_1
+                        - number.thermostat_hall_minutes_1
+                        - number.thermostat_hall_temperature_1
+                    - show_name: false
+                      show_icon: true
+                      show_state: true
+                      type: glance
+                      entities:
+                        - number.thermostat_hall_hour_2
+                        - number.thermostat_hall_minutes_2
+                        - number.thermostat_hall_temperature_2
+                    - show_name: false
+                      show_icon: true
+                      show_state: true
+                      type: glance
+                      entities:
+                        - number.thermostat_hall_hour_3
+                        - number.thermostat_hall_minutes_3
+                        - number.thermostat_hall_temperature_3
+                    - show_name: false
+                      show_icon: true
+                      show_state: true
+                      type: glance
+                      entities:
+                        - number.thermostat_hall_hour_4
+                        - number.thermostat_hall_minutes_4
+                        - number.thermostat_hall_temperature_4
+                    - show_name: false
+                      show_icon: true
+                      show_state: true
+                      type: glance
+                      entities:
+                        - number.thermostat_hall_hour_5
+                        - number.thermostat_hall_minutes_5
+                        - number.thermostat_hall_temperature_5
+                    - show_name: false
+                      show_icon: true
+                      show_state: true
+                      type: glance
+                      entities:
+                        - number.thermostat_hall_hour_6
+                        - number.thermostat_hall_minutes_6
+                        - number.thermostat_hall_temperature_6
+        - type: conditional
+          conditions:
+            - entity: select.thermostat_hall_select_week
+              state: 7 days
+          card:
+            type: vertical-stack
+            cards:
+              - type: horizontal-stack
+                cards:
+                  - show_name: true
+                    show_icon: true
+                    type: button
+                    tap_action:
+                      action: none
+                    entity: switch.thermostat_hall_wor_points
+                    icon_height: 20px
+                    hold_action:
+                      action: toggle
+                    name: 7 days
+                    icon: mdi:calendar-blank
+                  - type: conditional
+                    conditions:
+                      - entity: switch.thermostat_hall_cansel
+                        state: 'on'
+                    card:
+                      type: horizontal-stack
+                      cards:
+                        - show_name: false
+                          show_icon: true
+                          type: button
+                          tap_action:
+                            action: none
+                          entity: switch.thermostat_hall_cansel
+                          icon_height: 20px
+                          hold_action:
+                            action: toggle
+                        - show_name: false
+                          show_icon: true
+                          type: button
+                          tap_action:
+                            action: none
+                          entity: switch.thermostat_hall_save
+                          icon_height: 20px
+                          hold_action:
+                            action: toggle
+              - type: conditional
+                conditions:
+                  - entity: switch.thermostat_hall_wor_points
+                    state: 'on'
+                card:
+                  type: vertical-stack
+                  cards:
+                    - show_name: false
+                      show_icon: true
+                      show_state: true
+                      type: glance
+                      entities:
+                        - number.thermostat_hall_hour_1
+                        - number.thermostat_hall_minutes_1
+                        - number.thermostat_hall_temperature_1
+                    - show_name: false
+                      show_icon: true
+                      show_state: true
+                      type: glance
+                      entities:
+                        - number.thermostat_hall_hour_2
+                        - number.thermostat_hall_minutes_2
+                        - number.thermostat_hall_temperature_2
+                    - show_name: false
+                      show_icon: true
+                      show_state: true
+                      type: glance
+                      entities:
+                        - number.thermostat_hall_hour_3
+                        - number.thermostat_hall_minutes_3
+                        - number.thermostat_hall_temperature_3
+                    - show_name: false
+                      show_icon: true
+                      show_state: true
+                      type: glance
+                      entities:
+                        - number.thermostat_hall_hour_4
+                        - number.thermostat_hall_minutes_4
+                        - number.thermostat_hall_temperature_4
+                    - show_name: false
+                      show_icon: true
+                      show_state: true
+                      type: glance
+                      entities:
+                        - number.thermostat_hall_hour_5
+                        - number.thermostat_hall_minutes_5
+                        - number.thermostat_hall_temperature_5
+                    - show_name: false
+                      show_icon: true
+                      show_state: true
+                      type: glance
+                      entities:
+                        - number.thermostat_hall_hour_6
+                        - number.thermostat_hall_minutes_6
+                        - number.thermostat_hall_temperature_6
