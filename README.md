@@ -28,3 +28,6 @@ IP address and write it down in thermostat-hall.yaml (for updates).In the thermo
 file for the visualization panel, rename "hall" to your name.
 
 5 etc. everything is standard.
+
+
+![IMG_1628](https://github.com/SergyiSviderskii/THERMOSTAT-HY02B05-TYUA-PROTOCOL---VERSION-1-ESPHOME-HOMEASSISTANT/assets/70329544/fecb2059-b28f-438c-98f5-b0c3504e4fc8)
