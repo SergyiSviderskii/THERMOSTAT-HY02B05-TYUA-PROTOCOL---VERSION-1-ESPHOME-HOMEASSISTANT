@@ -788,7 +788,9 @@ class TuComponent : public Component, public UARTDevice {
                   id(my_custom_climate).mode = climate::CLIMATE_MODE_HEAT;  
                 } else {
                   id(my_custom_climate).mode = climate::CLIMATE_MODE_OFF;
-                  id(my_custom_climate).action = climate::CLIMATE_ACTION_IDLE;
+                  if (id(power).state) {
+                    id(my_custom_climate).action = climate::CLIMATE_ACTION_IDLE;
+                  }
                 }
                 id(my_custom_climate).publish_state();
                 break;
