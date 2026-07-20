@@ -1,0 +1,1468 @@
+# THERMOSTAT HY02B05 TYUA PROTOCOL VERSION 1
+substitutions:
+  hostname: "thermostat-house-living-room"
+  friendly_name: Термостат 
+ # key_api: "yfI3xKmGaIYJI9kwvrZfKN02dWNC+CEcQxv9w31v9W4="
+  password_ota: "f34ead3877bf10a846d1881b41bdb32f"
+  esphome_service: "switch_heater_house_living_room"  
+  reload_config: "climate.thermostat_house_living_room"
+  installation_area: "дом - гостиная"
+  reboot_timeout: "15min"
+  bssid_1: !secret wifi_bssid_house_hall
+  bssid_2: !secret wifi_bssid_house_bedroom_home
+  bssid_3: !secret wifi_bssid_house_bedroom_iot
+  bssid_4: !secret wifi_bssid_house_bedroom_reserve
+  bssid_5: !secret wifi_bssid_house_living_room
+  bssid_6: !secret wifi_bssid_house_canopy
+  bssid_7: !secret wifi_bssid_house_garret
+  bssid_8: !secret wifi_bssid_house_garage
+  bssid_9: !secret wifi_bssid_bath_garret
+  bssid_10: !secret wifi_bssid_bath_garret_1
+  wifi_bssid_1_: "Дом зал роутер"  
+  wifi_bssid_2_: "Дом cпальня роутер общая"   
+  wifi_bssid_3_: "Дом cпальня роутер iot"    
+  wifi_bssid_4_: "Дом cпальня роутер резерв"    
+  wifi_bssid_5_: "Дом гостинная роутер"    
+  wifi_bssid_6_: "Дом сени усилитель"  
+  wifi_bssid_7_: "Дом чердак усилитель"    
+  wifi_bssid_8_: "Дом гараж усилитель"    
+  wifi_bssid_9_: "Баня чердак усилитель"    
+  wifi_bssid_10_: "Баня чердак усилитель_1" 
+    
+
+esphome:
+  name: $hostname
+  friendly_name: $friendly_name   
+  area: $installation_area  
+  on_boot:
+    priority: 600
+    then:
+      - lambda: |-   
+          id(thermostat_component).my_global_mode = id(my_global_mode);
+      - text_sensor.template.publish:
+          id: point_bssid
+          state: "Нет данных"   
+      - text_sensor.template.publish:
+          id: bssid_point
+          state: "Нет данных"           
+          
+
+esp8266:
+  board: esp01_1m
+  restore_from_flash: true  
+          
+
+# Enable logging
+logger:
+  level: NONE
+  baud_rate: 0 
+
+
+wifi:
+  min_auth_mode: WPA2
+  reboot_timeout: $reboot_timeout # Если сети нет вообще 15 минут, плата перезагрузится для профилактики
+  fast_connect: false   # СТРОГО FALSE! Это заставит плату всегда выбирать НАИЛУЧШИЙ сигнал (RSSI)
+  power_save_mode: NONE
+#  use_address: 192.168.100.154    
+  
+  networks:
+    - ssid: !secret wifi_ssid_house_hall
+      password: !secret wifi_password
+  
+    - ssid: !secret wifi_ssid_plus
+      password: !secret wifi_password_home
+
+    - ssid: !secret wifi_ssid_house_bedroom_iot
+      password: !secret wifi_password
+  
+    - ssid: !secret wifi_ssid_house_bedroom_reserve
+      password: !secret wifi_password
+  
+    - ssid: !secret wifi_ssid_house_living_room 
+      password: !secret wifi_password
+ 
+    - ssid: !secret wifi_ssid_house_canopy 
+      password: !secret wifi_password
+  
+    - ssid: !secret wifi_ssid_house_garret
+      password: !secret wifi_password
+  
+    - ssid: !secret wifi_ssid_house_garage
+      password: !secret wifi_password
+   
+    - ssid: !secret wifi_ssid_bath_garret    
+      password: !secret wifi_password
+  
+    - ssid: !secret wifi_ssid_bath_garret_1     
+      password: !secret wifi_password
+  
+      
+#   ssid: $wifi_ssid
+#   password: $wifi_password
+#   fast_connect: true
+   
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+#   ap:
+#     ssid: $hostname
+#     password: !secret wifi_ap_password  
+
+
+ota:
+  - platform: esphome
+    password: "$password_ota"
+
+
+#captive_portal:
+
+
+# web_server:
+#port: 80
+  #https://esphome.io/components/web_server.html   
+  
+
+# Enable Home Assistant API
+api:
+  #encryption:
+   # key: "$key_api
+  reboot_timeout: $reboot_timeout  
+  services:
+    - service: connected
+      variables:
+        my_connected: bool
+      then:
+        - lambda: |-
+            id(thermostat_connected_switch_heatet).publish_state(my_connected); 
+
+
+uart:
+  rx_pin: GPIO3
+  tx_pin: GPIO1
+  baud_rate: 9600 
+ 
+ 
+globals:
+  - id: my_global_mode
+    type: int
+    restore_value: true   
+ 
+    
+external_components:
+  - source:
+      type: local
+      path: components/my_components/my_tuya
+    refresh: 1d
+    components: all 
+ 
+  
+tuya:
+  id: thermostat_component
+  time_id: homeassistant_time
+  ignore_mcu_update_on_datapoints: 
+  - 101
+  - 108
+  on_datapoint_update:
+    - sensor_datapoint: 114
+      datapoint_type: int
+      then:
+        - if:     
+            condition: 
+              switch.is_off: setting_points 
+            then: 
+              - if:     
+                  condition:              
+                    lambda: |-
+                      return x != id(max_temperature).state;
+                  then:
+                    lambda: |-
+                      id(max_temperature).publish_state(x);   
+    - sensor_datapoint: 115
+      datapoint_type: int
+      then:
+        - if:     
+            condition:  
+              switch.is_off: setting_points
+            then: 
+              - if:     
+                  condition:              
+                    lambda: |-
+                      return x != id(min_temperature).state;
+                  then:
+                    lambda: |-
+                      id(min_temperature).publish_state(x);            
+    - sensor_datapoint: 12
+      datapoint_type: bitmask
+      then:
+        - lambda: |-
+            ESP_LOGD("main", "on_datapoint_update %#08X", x);      
+            if (x == 0) {id(error).publish_state("No");}
+            if (x == 2) {id(error).publish_state("Internal sensor");}
+            if (x == 4) {id(error).publish_state("External sensor");}
+            if (x == 8) {id(error).publish_state("Lower temperature threshold");}
+            if (x == 16) {id(error).publish_state("Upper temperature threshold");} 
+    - sensor_datapoint: 119
+      datapoint_type: raw
+      then: 
+        - if:     
+            condition: 
+              and:
+                - switch.is_on: work_points  
+                - switch.is_on: save 
+                - switch.is_on: cansel
+            then:
+              lambda: |- 
+                id(thermostat_component).get_datapoint_addition (119, false); 
+    - sensor_datapoint: 120
+      datapoint_type: raw
+      then: 
+        - if:     
+            condition:   
+              and:
+                - switch.is_on: work_points  
+                - switch.is_on: save 
+                - switch.is_on: cansel
+            then:
+              lambda: |- 
+                id(thermostat_component).get_datapoint_addition (120, true);   
+    - sensor_datapoint: 121
+      datapoint_type: raw
+      then: 
+        - if:     
+            condition:   
+              and:
+                - switch.is_on: week_points  
+                - switch.is_on: save  
+                - switch.is_on: cansel
+            then:
+              lambda: |- 
+                id(thermostat_component).get_datapoint_addition (121, false);   
+    - sensor_datapoint: 122
+      datapoint_type: raw
+      then: 
+        - if:     
+            condition:   
+              and:
+                - switch.is_on: week_points  
+                - switch.is_on: save   
+                - switch.is_on: cansel                
+            then:
+              lambda: |- 
+                id(thermostat_component).get_datapoint_addition (122, true);   
+        - switch.turn_off: save        
+        - switch.turn_off: cansel
+ 
+# configuration overload             
+script:
+  - id: script_switch_off
+    mode: queued
+    then:
+      - delay: 100ms  
+      - if:     
+          condition:
+            or:
+              - and:
+                  - switch.is_off: switch_power
+                  - switch.is_off: lock_datapoint
+              - switch.is_on: lock_datapoint 
+          then: 
+            - if:     
+                condition:  
+                  switch.is_on: setting
+                then:  
+                  switch.turn_off: setting  
+          else:
+            - script.stop: script_lock_on
+            - script.execute: script_lock_on             
+      - if:     
+          condition: 
+            switch.is_off: setting
+          then: 
+            - if:     
+                condition: 
+                  switch.is_on: setting_points  
+                then:  
+                  switch.turn_off: setting_points                  
+      - if:     
+          condition: 
+            switch.is_off: setting_points 
+          then: 
+            - if:     
+                condition:  
+                  switch.is_on: cansel
+                then:  
+                  switch.turn_off: cansel          
+            - if:     
+                condition:  
+                  switch.is_on: work_points 
+                then:  
+                  switch.turn_off: work_points   
+            - if:     
+                condition:  
+                  switch.is_on: week_points 
+                then:  
+                  switch.turn_off: week_points 
+          else:
+            - if:     
+                condition: 
+                  binary_sensor.is_off: flag_work_week  
+                then: 
+                  - if:     
+                      condition:  
+                        switch.is_on: week_points  
+                      then:  
+                        - if:     
+                            condition:  
+                              switch.is_on: work_points 
+                            then:  
+                              switch.turn_off: work_points  
+                else:              
+                  - if:     
+                      condition: 
+                        or:
+                          - switch.is_on: work_points 
+                          - lambda: |- 
+                              std::string current = id(select_week).current_option();
+                              return current ==  "7 days";
+                      then:  
+                        - if:     
+                            condition:  
+                              switch.is_on: week_points 
+                            then:  
+                              switch.turn_off: week_points 
+                              
+            - if:     
+                condition: 
+                  and:
+                    - switch.is_off: save
+                    - switch.is_off: cansel
+                then:                              
+                  - if:     
+                      condition: 
+                        and:
+                          - switch.is_on: work_points  
+                      then:  
+                        - if:     
+                            condition:  
+                              or:
+                                - lambda: |-  
+                                    return !(id(thermostat_component).datapoint_id_1.has_value() && id(thermostat_component).datapoint_id_2.has_value() && \
+                                          id(thermostat_component).datapoint_id_1->id == 119 && id(thermostat_component).datapoint_id_2->id == 120); 
+                            then:
+                              lambda: |- 
+                                id(thermostat_component).get_datapoint_addition (119, false);
+                                id(thermostat_component).get_datapoint_addition (120, true);
+                  - if:     
+                      condition: 
+                        and:
+                          - switch.is_on: week_points  
+                      then: 
+                        - if:     
+                            condition: 
+                              or:
+                                - lambda: |-  
+                                    return !(id(thermostat_component).datapoint_id_1.has_value() && id(thermostat_component).datapoint_id_2.has_value() && \
+                                          id(thermostat_component).datapoint_id_1->id == 121 && id(thermostat_component).datapoint_id_2->id == 122); 
+                            then:
+                              lambda: |- 
+                                id(thermostat_component).get_datapoint_addition (121, false); 
+                                id(thermostat_component).get_datapoint_addition (122, true);
+                  - if:     
+                      condition: 
+                        and:
+                          - lambda: |-  
+                              return id(thermostat_component).datapoint_id_1.has_value() && id(thermostat_component).datapoint_id_2.has_value(); 
+                      then: 
+                        lambda: |-  
+                          float i = (id(thermostat_component).datapoint_id_1->value_raw[0] & 0x7F) * 60 + (id(thermostat_component).datapoint_id_1->value_raw[1] & 0x7F);
+                          if ( i >= 23 * 60 + 54) {
+                            i = 0;
+                          }  
+                          id(number_hour_1).publish_state((int)(i/60));
+                          id(number_minutes_1).publish_state((int)((i/60 - id(number_hour_1).state)*60)); 
+                          id(number_temperature_1).publish_state(id(thermostat_component).datapoint_id_1->value_raw[2] & 0x7F);  
+                          float j = (id(thermostat_component).datapoint_id_1->value_raw[3] & 0x7F) * 60 + (id(thermostat_component).datapoint_id_1->value_raw[4] & 0x7F);
+                          if ( i >= j ) {
+                            j = i + 1;       
+                          } 
+                          id(number_hour_2).publish_state((int)(j/60));
+                          id(number_minutes_2).publish_state((int)((j/60 - id(number_hour_2).state)*60)); 
+                          id(number_temperature_2).publish_state(id(thermostat_component).datapoint_id_1->value_raw[5] & 0x7F);   
+                          i = (id(thermostat_component).datapoint_id_1->value_raw[6] & 0x7F) * 60 + (id(thermostat_component).datapoint_id_1->value_raw[7] & 0x7F);
+                          if ( j >= i ) {
+                            i = j + 1;       
+                          } 
+                          id(number_hour_3).publish_state((int)(i/60));
+                          id(number_minutes_3).publish_state((int)((i/60 - id(number_hour_3).state)*60)); 
+                          id(number_temperature_3).publish_state(id(thermostat_component).datapoint_id_1->value_raw[8] & 0x7F);  
+                          j = (id(thermostat_component).datapoint_id_2->value_raw[0] & 0x7F) * 60 + (id(thermostat_component).datapoint_id_2->value_raw[1] & 0x7F);
+                          if ( i >= j ) {
+                            j = i + 1;       
+                          } 
+                          id(number_hour_4).publish_state((int)(j/60));
+                          id(number_minutes_4).publish_state((int)((j/60 - id(number_hour_4).state)*60)); 
+                          id(number_temperature_4).publish_state(id(thermostat_component).datapoint_id_2->value_raw[2] & 0x7F);  
+                          i = (id(thermostat_component).datapoint_id_2->value_raw[3] & 0x7F) * 60 + (id(thermostat_component).datapoint_id_2->value_raw[4] & 0x7F);
+                          if ( j >= i ) {
+                            i = j + 1;       
+                          }
+                          id(number_hour_5).publish_state((int)(i/60));
+                          id(number_minutes_5).publish_state((int)((i/60 - id(number_hour_5).state)*60)); 
+                          id(number_temperature_5).publish_state(id(thermostat_component).datapoint_id_2->value_raw[5] & 0x7F);  
+                          j = (id(thermostat_component).datapoint_id_2->value_raw[6] & 0x7F) * 60 + (id(thermostat_component).datapoint_id_2->value_raw[7] & 0x7F);
+                          if ( i >= j ) {
+                            j = i + 1;       
+                          } 
+                          id(number_hour_6).publish_state((int)(j/60));
+                          id(number_minutes_6).publish_state((int)((j/60 - id(number_hour_6).state)*60)); 
+                          id(number_temperature_6).publish_state(id(thermostat_component).datapoint_id_2->value_raw[8] & 0x7F);  
+      - if:     
+          condition: 
+            and:
+              - switch.is_off: work_points  
+              - switch.is_off: week_points    
+          then: 
+            - if:     
+                condition:  
+                  switch.is_on: cansel
+                then:  
+                  switch.turn_off: cansel 
+      - if:     
+          condition: 
+            switch.is_on: save  
+          then: 
+            - if:     
+                condition:  
+                  switch.is_off: cansel
+                then:  
+                  switch.turn_off: save  
+                else:          
+                  script.execute: script_number                 
+                  
+  - id: script_number
+    mode: queued
+    then:
+      - if:     
+          condition:
+            and:
+              - switch.is_on: switch_power
+              - switch.is_off: lock_datapoint
+              - and:
+                  or:
+                    - and:
+                        - switch.is_off: work_points  
+                        - switch.is_on: week_points  
+                    - and:
+                        - switch.is_on: work_points  
+                        - switch.is_off: week_points                              
+          then: 
+            - script.stop: script_lock_on
+            - script.execute: script_lock_on 
+            - lambda: |-
+                std::vector<uint8_t> value_points {};
+                std::vector<uint8_t> value_points_1 {};            
+                float x = id(sending_number_x).state;
+                switch ((int)id(sending_number).state) {
+                  case 0:
+                    if ((x * 60 + id(number_minutes_1).state) >= (id(number_hour_2).state * 60 + id(number_minutes_2).state) || \
+                      (x * 60 + id(number_minutes_1).state) >= (id(number_hour_6).state * 60 + id(number_minutes_6).state)) { 
+                      x = id(number_hour_1).state; 
+                    id(number_hour_1).publish_state(x + 1);
+                    }
+                    id(number_hour_1).publish_state(x);  
+                    break; 
+                  case 1:
+                    if ((id(number_hour_1).state * 60  + x ) >= (id(number_hour_2).state * 60 + id(number_minutes_2).state) || \
+                      (id(number_hour_1).state * 60  + x ) >= (id(number_hour_6).state * 60 + id(number_minutes_6).state)) { 
+                      x = id(number_minutes_1).state;  
+                    id(number_minutes_1).publish_state(x + 1);
+                    }
+                    id(number_minutes_1).publish_state(x); 
+                    break;  
+                  case 2:
+                    if (x > id(number_max_temperature).state) {
+                      x = id(number_max_temperature).state; 
+                      id(number_temperature_1).publish_state(x - 1); 
+                    }  
+                    if (x < id(number_min_temperature).state) {
+                      x = id(number_min_temperature).state; 
+                      id(number_temperature_1).publish_state(x + 1); 
+                    }               
+                    id(number_temperature_1).publish_state(x);   
+                    break;   
+                  case 3:
+                    if ((x * 60 + id(number_minutes_2).state) <= (id(number_hour_1).state * 60 + id(number_minutes_1).state) || \
+                      (x * 60 + id(number_minutes_2).state) >= (id(number_hour_3).state * 60 + id(number_minutes_3).state)) { 
+                      x = id(number_hour_2).state; 
+                    id(number_hour_2).publish_state(x + 1);
+                    }
+                    id(number_hour_2).publish_state(x);   
+                    break; 
+                  case 4:
+                    if ((id(number_hour_2).state * 60  + x ) <= (id(number_hour_1).state * 60 + id(number_minutes_1).state) || \
+                      (id(number_hour_2).state * 60  + x ) >= (id(number_hour_3).state * 60 + id(number_minutes_3).state)) { 
+                      x = id(number_minutes_2).state;  
+                    id(number_minutes_2).publish_state(x + 1);
+                    }
+                    id(number_minutes_2).publish_state(x);    
+                    break;  
+                  case 5:
+                    if (x > id(number_max_temperature).state) {
+                      x = id(number_max_temperature).state; 
+                      id(number_temperature_2).publish_state(x - 1); 
+                    }  
+                    if (x < id(number_min_temperature).state) {
+                      x = id(number_min_temperature).state; 
+                      id(number_temperature_2).publish_state(x + 1); 
+                    }               
+                    id(number_temperature_2).publish_state(x);  
+                    break;     
+                  case 6:
+                    if ((x * 60 + id(number_minutes_3).state) <= (id(number_hour_2).state * 60 + id(number_minutes_2).state) || \
+                      (x * 60 + id(number_minutes_3).state) >= (id(number_hour_4).state * 60 + id(number_minutes_4).state)) { 
+                      x = id(number_hour_3).state; 
+                    id(number_hour_3).publish_state(x + 1); 
+                    }    
+                    id(number_hour_3).publish_state(x);   
+                    break; 
+                  case 7:
+                    if ((id(number_hour_3).state * 60  + x ) <= (id(number_hour_2).state * 60 + id(number_minutes_2).state) || \
+                      (id(number_hour_3).state * 60  + x ) >= (id(number_hour_4).state * 60 + id(number_minutes_4).state)) { 
+                      x = id(number_minutes_3).state;  
+                    id(number_minutes_3).publish_state(x + 1);
+                    }
+                    id(number_minutes_3).publish_state(x);   
+                    break;  
+                  case 8:
+                    if (x > id(number_max_temperature).state) {
+                      x = id(number_max_temperature).state; 
+                      id(number_temperature_3).publish_state(x - 1); 
+                    }  
+                    if (x < id(number_min_temperature).state) {
+                      x = id(number_min_temperature).state; 
+                      id(number_temperature_3).publish_state(x + 1); 
+                    }               
+                    id(number_temperature_3).publish_state(x); 
+                    break;   
+                  case 9:
+                    if ((x * 60 + id(number_minutes_4).state) <= (id(number_hour_3).state * 60 + id(number_minutes_3).state) || \
+                      (x * 60 + id(number_minutes_4).state) >= (id(number_hour_5).state * 60 + id(number_minutes_5).state)) { 
+                      x = id(number_hour_4).state; 
+                    id(number_hour_4).publish_state(x + 1); 
+                    }
+                    id(number_hour_4).publish_state(x);   
+                    break; 
+                  case 10:
+                    if ((id(number_hour_4).state * 60  + x ) <= (id(number_hour_3).state * 60 + id(number_minutes_3).state) || \
+                      (id(number_hour_4).state * 60  + x ) >= (id(number_hour_5).state * 60 + id(number_minutes_5).state)) { 
+                      x = id(number_minutes_4).state; 
+                    id(number_minutes_4).publish_state(x + 1);
+                    }    
+                    id(number_minutes_4).publish_state(x); 
+                    break;  
+                  case 11:
+                    if (x > id(number_max_temperature).state) {
+                      x = id(number_max_temperature).state; 
+                      id(number_temperature_4).publish_state(x - 1); 
+                    }  
+                    if (x < id(number_min_temperature).state) {
+                      x = id(number_min_temperature).state; 
+                      id(number_temperature_4).publish_state(x + 1); 
+                    }               
+                    id(number_temperature_4).publish_state(x);  
+                    break;   
+                  case 12:
+                    if ((x * 60 + id(number_minutes_5).state) <= (id(number_hour_4).state * 60 + id(number_minutes_4).state) || \
+                      (x * 60 + id(number_minutes_5).state) >= (id(number_hour_6).state * 60 + id(number_minutes_6).state)) { 
+                      x = id(number_hour_5).state; 
+                    id(number_hour_5).publish_state(x + 1); 
+                    }
+                    id(number_hour_5).publish_state(x);    
+                    break; 
+                  case 13:
+                    if ((id(number_hour_5).state * 60  + x ) <= (id(number_hour_4).state * 60 + id(number_minutes_4).state) || \
+                      (id(number_hour_5).state * 60  + x ) >= (id(number_hour_6).state * 60 + id(number_minutes_6).state)) { 
+                      x = id(number_minutes_5).state; 
+                    id(number_minutes_5).publish_state(x + 1);
+                    }
+                    id(number_minutes_5).publish_state(x);
+                    break;  
+                  case 14:
+                    if (x > id(number_max_temperature).state) {
+                      x = id(number_max_temperature).state; 
+                      id(number_temperature_5).publish_state(x - 1); 
+                    }  
+                    if (x < id(number_min_temperature).state) {
+                      x = id(number_min_temperature).state; 
+                      id(number_temperature_5).publish_state(x + 1); 
+                    }               
+                    id(number_temperature_5).publish_state(x);  
+                    break;
+                  case 15:
+                    if ((x * 60 + id(number_minutes_6).state) <= (id(number_hour_1).state * 60 + id(number_minutes_1).state) || \
+                      (x * 60 + id(number_minutes_6).state) <= (id(number_hour_5).state * 60 + id(number_minutes_5).state)) { 
+                      x = id(number_hour_6).state; 
+                    id(number_hour_6).publish_state(x + 1); 
+                    }
+                    id(number_hour_6).publish_state(x);  
+                    break; 
+                  case 16:
+                    if ((id(number_hour_6).state * 60  + x ) <= (id(number_hour_1).state * 60 + id(number_minutes_1).state) || \
+                      (id(number_hour_6).state * 60  + x ) <= (id(number_hour_5).state * 60 + id(number_minutes_5).state)) { 
+                      x = id(number_minutes_6).state;  
+                    id(number_minutes_6).publish_state(x + 1);
+                    }
+                    id(number_minutes_6).publish_state(x);  
+                    break;  
+                  case 17:
+                    if (x > id(number_max_temperature).state) {
+                      x = id(number_max_temperature).state; 
+                      id(number_temperature_6).publish_state(x - 1); 
+                    }  
+                    if (x < id(number_min_temperature).state) {
+                      x = id(number_min_temperature).state; 
+                      id(number_temperature_6).publish_state(x + 1); 
+                    }               
+                    id(number_temperature_6).publish_state(x);   
+                    break;                    
+                  default:
+                    break;
+                } 
+                
+                value_points = {(uint8_t)id(number_hour_1).state, (uint8_t)id(number_minutes_1).state, (uint8_t)id(number_temperature_1).state,
+                                (uint8_t)id(number_hour_2).state, (uint8_t)id(number_minutes_2).state, (uint8_t)id(number_temperature_2).state,
+                                (uint8_t)id(number_hour_3).state, (uint8_t)id(number_minutes_3).state, (uint8_t)id(number_temperature_3).state};             
+            
+                value_points_1 = {(uint8_t)id(number_hour_4).state, (uint8_t)id(number_minutes_4).state, (uint8_t)id(number_temperature_4).state,
+                                  (uint8_t)id(number_hour_5).state, (uint8_t)id(number_minutes_5).state, (uint8_t)id(number_temperature_5).state,
+                                  (uint8_t)id(number_hour_6).state, (uint8_t)id(number_minutes_6).state, (uint8_t)id(number_temperature_6).state}; 
+                                   
+                if ((value_points != id(thermostat_component).datapoint_id_1->value_raw) || \
+                    (value_points_1 != id(thermostat_component).datapoint_id_2->value_raw)) {
+                  if (!id(cansel).state)
+                    id(cansel).turn_on();
+                } else {
+                  if (id(cansel).state)
+                    id(cansel).turn_off();                
+                }
+                if(id(save).state) {   
+                  id(thermostat_component).set_raw_datapoint_value(id(thermostat_component).datapoint_id_1->id, value_points);
+                  delay (100);
+                  id(thermostat_component).set_raw_datapoint_value(id(thermostat_component).datapoint_id_2->id, value_points_1);  
+                }
+                
+  - id: reload_config 
+    then:
+      - lambda: |-    
+          id(my_climate).set_visual_min_temperature_override(id(min_temperature).state);   
+          id(my_climate).set_visual_max_temperature_override(id(max_temperature).state);
+      - homeassistant.service: 
+          service: homeassistant.reload_config_entry 
+          data: 
+            entity_id: ${reload_config}                 
+            
+  - id: script_lock_on
+    then:
+      - delay: 60000ms   
+      - switch.turn_on: lock_datapoint
+      
+  - id: script_delay_reload_config
+    then:
+      - delay: 5000ms 
+      - script.execute: reload_config
+
+  - id: script_mode_memory
+    then:
+      - delay: 10000ms     
+      - lambda: |-
+          auto index = id(options_mode).active_index();
+          if (index.has_value() && id(my_global_mode) != index.value() && (index.value() != 3 || index.value() != 4) && (tuya::TuyaInitState::INIT_DONE == id(thermostat_component).get_init_state())) {
+            id(my_global_mode) = index.value();
+          }       
+            
+                  
+climate:
+  - platform: "tuya"
+    name: " " 
+    id: my_climate   
+    switch_datapoint: 1
+    target_temperature_datapoint: 2
+    current_temperature_datapoint: 3
+    temperature_multiplier: 0.1
+    # active_state:
+    #   datapoint: 102
+    #   heating_value: 1
+    visual:
+      temperature_step:
+        target_temperature: 0.5
+        current_temperature: 0.5
+    # disabled_by_default: false
+    # supports_heat: true
+    # supports_cool: true
+    # reports_fahrenheit: false
+
+
+sensor:  
+  - platform: "tuya"
+    name: "external_temperature"
+    sensor_datapoint: 103
+    accuracy_decimals: 1
+    unit_of_measurement: °C
+    icon: mdi:thermometer
+    device_class: temperature
+    state_class: "measurement" 
+    filters:
+      - multiply: 0.1    
+    
+  - platform: template
+    id: sending_number
+    update_interval: never 
+    
+  - platform: template
+    id: sending_number_x
+    update_interval: never     
+               
+  - platform: template
+    id: max_temperature
+    on_value:
+      then:
+        - if:
+            condition:
+              - script.is_running: script_delay_reload_config 
+            then:
+              - script.stop: script_delay_reload_config  
+        - script.execute: script_delay_reload_config
+    accuracy_decimals: 1         
+    update_interval: never  
+    
+  - platform: template
+    id: min_temperature
+    on_value:
+      then:
+        - if:
+            condition:
+              - script.is_running: script_delay_reload_config 
+            then:
+              - script.stop: script_delay_reload_config  
+        - script.execute: script_delay_reload_config
+    accuracy_decimals: 1         
+    update_interval: never  
+ 
+  - platform: adc
+    pin: VCC
+    name: "ESP Voltage"
+
+  - platform: uptime
+    name: "Time work"
+    type: timestamp
+    id: uptime_s
+    
+  - platform: wifi_signal
+    # name: "Wi-Fi Signal Strength"
+    name: "RSSI"    
+    id: bania_wifi_signal
+    update_interval: 60s
+    # Вместо on_value_range используем ручную проверку при каждом обновлении
+    on_value:
+      then:
+        - if:
+            condition:
+              # Проверяем, что сигнал действительно хуже -85
+              - lambda: 'return id(bania_wifi_signal).state < -85.0;'
+              # ЗАЩИТА: проверяем, что плата подключена к сети уже больше 5 минут
+              # Это не даст ей сканировать эфир по кругу слишком часто
+              - lambda: 'return id(bania_wifi_signal).has_state();' 
+            then:
+              - logger.log: "Сигнал плохой! Пробую найти точку лучше..."
+              - lambda: |-
+                  esphome::wifi::global_wifi_component->start_scanning();
+              # Даем плате передышку в 5 минут, отключая этот опрос, чтобы она не зациклилась
+              - delay: 300s        
+
+switch:
+  - platform: "tuya"
+    name: "ON-OFF"
+    id: switch_power
+    icon: mdi:power-standby  
+    switch_datapoint: 1
+    on_turn_on:  
+      then:
+        - script.execute: script_switch_off     
+
+  - platform: "tuya"
+    name: "lock"
+    id: lock_datapoint
+    icon: mdi:lock  
+    switch_datapoint: 6
+    on_turn_on:  
+      then:
+        - script.execute: script_switch_off  
+    on_turn_off: 
+      then:
+        - script.execute: script_lock_on    
+
+  - platform: "tuya"    
+    name: "low_protection"
+    icon: mdi:radiator  
+    switch_datapoint: 106  
+
+  - platform: "tuya"      
+    name: "high_protection"
+    icon: mdi:radiator-off     
+    switch_datapoint: 107
+    
+  - platform: template        
+    name: "setting " 
+    id: setting
+    icon: mdi:cog-sync 
+    optimistic: true 
+    on_turn_on:  
+      then:
+        - script.execute: script_switch_off    
+    on_turn_off:  
+      then:
+        - script.execute: script_switch_off               
+    
+  - platform: template      
+    name: "setting_points" 
+    id: setting_points 
+    icon: mdi:timer-cog  
+    optimistic: true 
+    on_turn_on:  
+      then:
+        - script.execute: script_switch_off    
+    on_turn_off:  
+      then:
+        - script.execute: script_switch_off                
+
+  - platform: template     
+    name: "work_points" 
+    id: work_points 
+    icon: mdi:calendar-week
+    optimistic: true  
+    on_turn_on:  
+      then:
+        - lambda: |-
+            id(flag_work_week).publish_state(false);
+        - script.execute: script_switch_off      
+      
+  - platform: template        
+    name: "week_points" 
+    id: week_points 
+    icon: mdi:calendar-weekend   
+    optimistic: true
+    on_turn_on:  
+      then:
+        - lambda: |-
+            id(flag_work_week).publish_state(true);
+        - script.execute: script_switch_off    
+    
+  - platform: template        
+    name: "save"
+    id: save     
+    icon: mdi:tray-arrow-up 
+    optimistic: true
+    on_turn_on:  
+      then:
+        - script.execute: script_switch_off 
+    
+  - platform: template        
+    name: "cansel"
+    id: cansel
+    icon: mdi:tray-remove 
+    optimistic: true 
+    on_turn_on:  
+      then:
+        - script.execute: script_switch_off     
+    on_turn_off:  
+      then:
+        - script.execute: script_switch_off     
+ 
+  - platform: restart
+    name: "Restarting"   
+    
+  - platform: safe_mode
+    name: "Safe Mode"  
+ 
+binary_sensor: 
+  - platform: template 
+    id: flag_work_week
+
+  - platform: "tuya"
+    id: switch_heater     
+    sensor_datapoint: 102
+
+  - platform: template
+    name: "switch_connected"
+    id: thermostat_connected_switch_heatet 
+    on_state:
+      then:  
+        - homeassistant.service:
+            service: esphome.${esphome_service}_idle_connected 
+            data_template:
+              my_heater_idle: !lambda "return id(switch_heater).state;"  
+              my_connected: !lambda "return x;" 
+    
+
+select: 
+  - platform: "tuya"
+    name: "mode"
+    enum_datapoint: 4
+    id: options_mode  
+    icon: mdi:cog-refresh
+    options:
+      0: "Manual"
+      1: "Program"
+      2: "Holiday" 
+      3: "TempProg"
+    optimistic: true
+    on_value:
+      then:
+        - if:
+            condition:
+              - script.is_running: script_mode_memory 
+            then:
+              - script.stop: script_mode_memory  
+        - script.execute: script_mode_memory
+    
+  - platform: "tuya"
+    name: "options_control"
+    enum_datapoint: 116
+    options:
+      0: "built-in"
+      1: "external"
+      2: "built-in_external" 
+    optimistic: true 
+    
+  - platform: "tuya"
+    name: "turn_on_state"
+    enum_datapoint: 117
+    options:
+      0: "same state"
+      1: "off state"
+      2: "on state"
+    optimistic: true
+ 
+  - platform: "tuya"
+    name: "select_week"
+    id: select_week
+    icon: mdi:calendar-month
+    enum_datapoint: 118
+    options:
+      0: "5+2/2"
+      1: "6+1/1"
+      2: "7 days"   
+    optimistic: true  
+  
+
+number:
+  - platform: "tuya"
+    name: "vacation_days"
+    unit_of_measurement: days
+    icon: mdi:calendar-month
+    number_datapoint: 104 
+    min_value: 1
+    max_value: 30
+    step: 1
+    mode: box 
+
+  - platform: "tuya"
+    name: "vacation_temperature"       
+    unit_of_measurement: °C
+    icon: mdi:thermometer
+    number_datapoint: 105  
+    min_value: 1
+    max_value: 70
+    step: 1
+    mode: box 
+    
+  - platform: "tuya"
+    name: "calibration_sensor" 
+    unit_of_measurement: °C
+    icon: mdi:thermometer-lines 
+    number_datapoint: 109    
+    min_value: -9
+    max_value: 9
+    step: 1
+    multiply: 10
+    mode: box 
+
+  - platform: "tuya"
+    name: "working_hysteresis"  
+    unit_of_measurement: °C
+    icon: mdi:thermometer
+    number_datapoint: 110  
+    min_value: 0.5
+    max_value: 2.5
+    step: 0.5 
+    multiply: 10
+    mode: box 
+
+  - platform: "tuya"
+    name: "high_hysteresis_external"
+    unit_of_measurement: °C
+    icon: mdi:thermometer
+    number_datapoint: 111   
+    min_value: 1
+    max_value: 9
+    step: 1
+    mode: box 
+        
+  - platform: "tuya"
+    name: "high_external"
+    unit_of_measurement: °C
+    icon: mdi:thermometer-chevron-up
+    number_datapoint: 112     
+    min_value: 20
+    max_value: 70
+    step: 1
+    mode: box 
+
+  - platform: "tuya"
+    name: "low_external"
+    unit_of_measurement: °C
+    icon: mdi:thermometer-chevron-down
+    number_datapoint: 113    
+    min_value: 1
+    max_value: 10
+    step: 1  
+    mode: box 
+    
+  - platform: "tuya"
+    name: "max_temperature"
+    id: number_max_temperature  
+    unit_of_measurement: °C
+    icon: mdi:thermometer-high 
+    number_datapoint: 114
+    min_value: 20
+    max_value: 70
+    step: 1
+    mode: box 
+                               
+  - platform: "tuya"
+    name: "min_temperature"
+    id: number_min_temperature   
+    unit_of_measurement: °C
+    icon: mdi:thermometer-low
+    number_datapoint: 115
+    min_value: 1
+    max_value: 10
+    step: 1
+    mode: box 
+    
+  - platform: template
+    name: "hour_1"
+    id: number_hour_1
+    unit_of_measurement: h
+    icon: mdi:clock-time-one
+    update_interval: never
+    set_action:
+      then:
+        - sensor.template.publish:
+            id: sending_number_x
+            state: !lambda 'return x;'            
+        - sensor.template.publish:
+            id: sending_number
+            state: 0            
+        - script.execute: script_number                      
+    min_value: 0
+    max_value: 23
+    step: 1
+    mode: box           
+    
+  - platform: template
+    name: "minutes_1"
+    id: number_minutes_1
+    unit_of_measurement: m
+    icon: mdi:clock-time-one
+    update_interval: never
+    set_action:
+      then: 
+        - sensor.template.publish:
+            id: sending_number_x
+            state: !lambda 'return x;'            
+        - sensor.template.publish:
+            id: sending_number
+            state: 1            
+        - script.execute: script_number   
+    min_value: 0
+    max_value: 59
+    step: 1 
+    mode: box   
+
+  - platform: template
+    name: "temperature_1"
+    id: number_temperature_1
+    unit_of_measurement: °C
+    icon: mdi:thermometer-auto
+    update_interval: never
+    set_action:
+      then: 
+        - sensor.template.publish:
+            id: sending_number_x
+            state: !lambda 'return x;'            
+        - sensor.template.publish:
+            id: sending_number
+            state: 2           
+        - script.execute: script_number              
+    min_value: 1
+    max_value: 70
+    step: 1 
+    mode: box 
+        
+  - platform: template
+    name: "hour_2"
+    id: number_hour_2
+    unit_of_measurement: h
+    icon: mdi:clock-time-one
+    update_interval: never
+    set_action:
+      then:
+        - sensor.template.publish:
+            id: sending_number_x
+            state: !lambda 'return x;'            
+        - sensor.template.publish:
+            id: sending_number
+            state: 3           
+        - script.execute: script_number         
+    min_value: 0
+    max_value: 23  
+    step: 1 
+    mode: box
+    
+  - platform: template
+    name: "minutes_2"
+    id: number_minutes_2
+    unit_of_measurement: m
+    icon: mdi:clock-time-one 
+    update_interval: never
+    set_action:
+      then:
+        - sensor.template.publish:
+            id: sending_number_x
+            state: !lambda 'return x;'            
+        - sensor.template.publish:
+            id: sending_number
+            state: 4            
+        - script.execute: script_number         
+    min_value: 0
+    max_value: 59
+    step: 1 
+    mode: box
+
+     
+  - platform: template
+    name: "temperature_2"
+    id: number_temperature_2
+    unit_of_measurement: °C
+    icon: mdi:thermometer-auto
+    update_interval: never
+    set_action:
+      then:
+        - sensor.template.publish:
+            id: sending_number_x
+            state: !lambda 'return x;'            
+        - sensor.template.publish:
+            id: sending_number
+            state: 5            
+        - script.execute: script_number        
+    min_value: 1
+    max_value: 70
+    step: 1
+    mode: box
+    
+  - platform: template
+    name: "hour_3"
+    id: number_hour_3
+    unit_of_measurement: h
+    icon: mdi:clock-time-one 
+    update_interval: never
+    set_action:
+      then: 
+        - sensor.template.publish:
+            id: sending_number_x
+            state: !lambda 'return x;'            
+        - sensor.template.publish:
+            id: sending_number
+            state: 6         
+        - script.execute: script_number 
+    min_value: 0
+    max_value: 23  
+    step: 1 
+    mode: box
+    
+  - platform: template
+    name: "minutes_3"
+    id: number_minutes_3
+    unit_of_measurement: m
+    icon: mdi:clock-time-one
+    update_interval: never
+    set_action:
+      then: 
+        - sensor.template.publish:
+            id: sending_number_x
+            state: !lambda 'return x;'            
+        - sensor.template.publish:
+            id: sending_number
+            state: 7         
+        - script.execute: script_number 
+    min_value: 0
+    max_value: 59
+    step: 1 
+    mode: box
+     
+  - platform: template
+    name: "temperature_3"
+    id: number_temperature_3
+    unit_of_measurement: °C
+    icon: mdi:thermometer-auto
+    update_interval: never
+    set_action:
+      then: 
+        - sensor.template.publish:
+            id: sending_number_x
+            state: !lambda 'return x;'            
+        - sensor.template.publish:
+            id: sending_number
+            state: 8           
+        - script.execute: script_number   
+    min_value: 1
+    max_value: 70
+    step: 1
+    mode: box 
+    
+  - platform: template
+    name: "hour_4"
+    id: number_hour_4
+    unit_of_measurement: h
+    icon: mdi:clock-time-one  
+    update_interval: never
+    set_action:
+      then: 
+        - sensor.template.publish:
+            id: sending_number_x
+            state: !lambda 'return x;'            
+        - sensor.template.publish:
+            id: sending_number
+            state: 9        
+        - script.execute: script_number  
+    min_value: 0
+    max_value: 23
+    step: 1
+    mode: box           
+
+  - platform: template
+    name: "minutes_4"
+    id: number_minutes_4
+    unit_of_measurement: m
+    icon: mdi:clock-time-one
+    update_interval: never
+    set_action:
+      then: 
+        - sensor.template.publish:
+            id: sending_number_x
+            state: !lambda 'return x;'            
+        - sensor.template.publish:
+            id: sending_number
+            state: 10        
+        - script.execute: script_number 
+    min_value: 0
+    max_value: 59
+    step: 1 
+    mode: box
+
+  - platform: template
+    name: "temperature_4"
+    id: number_temperature_4
+    unit_of_measurement: °C
+    icon: mdi:thermometer-auto
+    update_interval: never
+    set_action:
+      then: 
+        - sensor.template.publish:
+            id: sending_number_x
+            state: !lambda 'return x;'            
+        - sensor.template.publish:
+            id: sending_number
+            state: 11         
+        - script.execute: script_number
+    min_value: 1
+    max_value: 70
+    step: 1 
+    mode: box 
+   
+  - platform: template
+    name: "hour_5"
+    id: number_hour_5
+    unit_of_measurement: h
+    icon: mdi:clock-time-one
+    update_interval: never
+    set_action:
+      then: 
+        - sensor.template.publish:
+            id: sending_number_x
+            state: !lambda 'return x;'            
+        - sensor.template.publish:
+            id: sending_number
+            state: 12         
+        - script.execute: script_number 
+    min_value: 0
+    max_value: 23
+    step: 1
+    mode: box 
+
+  - platform: template
+    name:  "minutes_5"
+    id: number_minutes_5
+    unit_of_measurement: m
+    icon: mdi:clock-time-one 
+    update_interval: never
+    set_action:
+      then: 
+        - sensor.template.publish:
+            id: sending_number_x
+            state: !lambda 'return x;'            
+        - sensor.template.publish:
+            id: sending_number
+            state: 13        
+        - script.execute: script_number  
+    min_value: 0
+    max_value: 59
+    step: 1 
+    mode: box
+     
+  - platform: template
+    name: "temperature_5"
+    id: number_temperature_5
+    unit_of_measurement: °C
+    icon: mdi:thermometer-auto 
+    update_interval: never
+    set_action:
+      then: 
+        - sensor.template.publish:
+            id: sending_number_x
+            state: !lambda 'return x;'            
+        - sensor.template.publish:
+            id: sending_number
+            state: 14        
+        - script.execute: script_number
+    min_value: 1
+    max_value: 70
+    step: 1 
+    mode: box 
+    
+  - platform: template
+    name: "hour_6"
+    id: number_hour_6
+    unit_of_measurement: h
+    icon: mdi:clock-time-one
+    update_interval: never
+    set_action:
+      then: 
+        - sensor.template.publish:
+            id: sending_number_x
+            state: !lambda 'return x;'            
+        - sensor.template.publish:
+            id: sending_number
+            state: 15         
+        - script.execute: script_number 
+    min_value: 0
+    max_value: 23
+    step: 1 
+    mode: box
+    
+  - platform: template
+    name: "minutes_6"
+    id: number_minutes_6
+    unit_of_measurement: m
+    icon: mdi:clock-time-one
+    update_interval: never
+    set_action:
+      then: 
+        - sensor.template.publish:
+            id: sending_number_x
+            state: !lambda 'return x;'            
+        - sensor.template.publish:
+            id: sending_number
+            state: 16         
+        - script.execute: script_number
+    min_value: 0
+    max_value: 59
+    step: 1 
+    mode: box  
+    
+  - platform: template
+    name: "temperature_6"
+    id: number_temperature_6
+    unit_of_measurement: °C
+    icon: mdi:thermometer-auto
+    update_interval: never
+    set_action:
+      then: 
+        - sensor.template.publish:
+            id: sending_number_x
+            state: !lambda 'return x;'            
+        - sensor.template.publish:
+            id: sending_number
+            state: 17         
+        - script.execute: script_number   
+    min_value: 1
+    max_value: 70
+    step: 1 
+    mode: box       
+    
+text_sensor:
+  - platform: template 
+    name: "error"  
+    id: error
+    icon: mdi:alert-outline
+    update_interval: never
+
+  - platform: template 
+    name: "Access point"  
+    id: point_bssid
+    icon: mdi:router-wireless
+    update_interval: never
+      
+  - platform: version
+    name: "ESPHome Version"    
+
+  - platform: wifi_info
+    ip_address:
+      icon: mdi:ip  
+      name: "IP"   
+    ssid:
+      icon: mdi:wifi-lock 
+      name: "SSID"
+    mac_address:
+      name: "Mac Wifi"  
+    bssid:
+      name: "BSSID"  
+      id: bssid_point
+      on_raw_value:
+        then:
+          - if:
+              condition: 
+                lambda: |-
+                  return x != "" && x != "Нет данных"; 
+              then:
+                - text_sensor.template.publish:
+                    id: point_bssid
+                    state: !lambda |-
+                      if (strcasecmp(x.c_str(), "${bssid_1}") == 0) return "${wifi_bssid_1_}";
+                      if (strcasecmp(x.c_str(), "${bssid_2}") == 0) return "${wifi_bssid_2_}";
+                      if (strcasecmp(x.c_str(), "${bssid_3}") == 0) return "${wifi_bssid_3_}";
+                      if (strcasecmp(x.c_str(), "${bssid_4}") == 0) return "${wifi_bssid_4_}";
+                      if (strcasecmp(x.c_str(), "${bssid_5}") == 0) return "${wifi_bssid_5_}";
+                      if (strcasecmp(x.c_str(), "${bssid_6}") == 0) return "${wifi_bssid_6_}";
+                      if (strcasecmp(x.c_str(), "${bssid_7}") == 0) return "${wifi_bssid_7_}";  
+                      if (strcasecmp(x.c_str(), "${bssid_8}") == 0) return "${wifi_bssid_8_}";
+                      if (strcasecmp(x.c_str(), "${bssid_9}") == 0) return "${wifi_bssid_9_}";
+                      if (strcasecmp(x.c_str(), "${bssid_10}") == 0) return "${wifi_bssid_10_}";
+                      
+                      return "Неизвестный роутер";
+
+time:
+  - platform: homeassistant
+    id: homeassistant_time  
+    
+    
