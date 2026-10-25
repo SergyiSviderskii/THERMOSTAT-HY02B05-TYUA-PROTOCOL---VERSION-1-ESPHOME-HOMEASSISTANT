@@ -1,0 +1,6 @@
+wifi:
+  min_auth_mode: WPA2
+  reboot_timeout: $reboot_timeout # Если сети нет через это время, плата перезагрузится для профилактики
+  fast_connect: false   # СТРОГО FALSE! Это заставит плату всегда выбирать НАИЛУЧШИЙ сигнал (RSSI)
+  power_save_mode: NONE
+#   use_address: 192.168.0.17

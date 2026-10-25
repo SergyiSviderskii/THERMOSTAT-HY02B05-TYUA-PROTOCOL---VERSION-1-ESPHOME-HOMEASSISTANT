@@ -1,0 +1,565 @@
+type: vertical-stack
+cards:
+  - type: tile
+    entity: sensor.dom_termostat_versiia_esphome
+    vertical: true
+    show_entity_picture: false
+    color: red
+    tap_action:
+      action: none
+    icon_tap_action:
+      action: none
+    name: Термостат
+    features_position: bottom
+  - type: horizontal-stack
+    cards:
+      - show_name: false
+        show_icon: true
+        type: button
+        tap_action:
+          action: none
+        entity: sensor.dom_termostat_ssid
+        show_state: true
+        icon_height: 20px
+      - show_name: false
+        show_icon: true
+        type: button
+        tap_action:
+          action: none
+        entity: sensor.dom_termostat_tochka_dostupa
+        show_state: true
+        icon_height: 20px
+      - show_name: false
+        show_icon: true
+        type: button
+        tap_action:
+          action: none
+        entity: sensor.dom_termostat_ip
+        show_state: true
+        icon_height: 20px
+  - type: conditional
+    conditions:
+      - entity: sensor.dom_termostat_oshibka
+        state_not: 'No'
+      - entity: sensor.dom_termostat_oshibka
+        state_not: unavailable
+      - entity: sensor.dom_termostat_oshibka
+        state_not: unknown
+    card:
+      show_name: true
+      show_icon: true
+      type: button
+      tap_action:
+        action: none
+      entity: sensor.dom_termostat_oshibka
+      name: error
+      show_state: true
+      icon_height: 20px
+      hold_action:
+        action: more-info
+  - type: vertical-stack
+    cards:
+      - type: conditional
+        conditions:
+          - entity: switch.dom_termostat_setting
+            state_not: 'on'
+        card:
+          type: vertical-stack
+          cards:
+            - type: horizontal-stack
+              cards:
+                - show_name: true
+                  show_icon: true
+                  type: button
+                  tap_action:
+                    action: none
+                  entity: sensor.dom_termostat_vremia_raboty
+                  show_state: true
+                  icon_height: 20px
+                  name: uptime
+                - show_name: true
+                  show_icon: true
+                  type: button
+                  tap_action:
+                    action: none
+                  icon_height: 20px
+                  name: external
+                  show_state: true
+                  entity: sensor.dom_termostat_vneshniaia_temperatura
+                - show_name: true
+                  show_icon: true
+                  type: button
+                  tap_action:
+                    action: none
+                  entity: sensor.dom_termostat_napriazhenie_esp
+                  name: esp
+                  icon_height: 20px
+                  show_state: true
+                - show_name: true
+                  show_icon: true
+                  type: button
+                  tap_action:
+                    action: none
+                  entity: sensor.dom_termostat_rssi
+                  show_state: true
+                  icon_height: 20px
+                  name: wifi
+            - type: thermostat
+              entity: climate.dom_termostat
+              features:
+                - type: climate-hvac-modes
+                  hvac_modes:
+                    - heat
+              name: Термостат
+            - type: conditional
+              conditions:
+                - entity: select.dom_termostat_mode
+                  state: Holiday
+                - entity: switch.dom_termostat_on_off
+                  state: 'on'
+              card:
+                type: horizontal-stack
+                cards:
+                  - show_name: false
+                    show_icon: false
+                    type: button
+                    tap_action:
+                      action: none
+                    entity: number.dom_termostat_vacation_days
+                    show_state: true
+                    icon_height: 20px
+                  - show_name: false
+                    show_icon: false
+                    type: button
+                    tap_action:
+                      action: none
+                    entity: number.dom_termostat_vacation_temperature
+                    show_state: true
+                    icon_height: 20px
+  - type: horizontal-stack
+    cards:
+      - type: conditional
+        conditions:
+          - entity: switch.dom_termostat_setting
+            state_not: 'on'
+        card:
+          show_name: false
+          show_icon: true
+          type: button
+          tap_action:
+            action: none
+          entity: switch.dom_termostat_on_off
+          icon_height: 20px
+          hold_action:
+            action: toggle
+      - type: conditional
+        conditions:
+          - entity: switch.dom_termostat_setting
+            state_not: 'on'
+        card:
+          show_name: false
+          show_icon: false
+          type: button
+          entity: select.dom_termostat_mode
+          icon_height: 20px
+          show_state: true
+          tap_action:
+            action: perform-action
+            perform_action: select.select_option
+            target:
+              entity_id: select.dom_termostat_mode
+            data:
+              option: Manual
+          hold_action:
+            action: perform-action
+            perform_action: select.select_option
+            target:
+              entity_id: select.dom_termostat_mode
+            data:
+              option: Holiday
+          double_tap_action:
+            action: perform-action
+            perform_action: select.select_option
+            target:
+              entity_id: select.dom_termostat_mode
+            data:
+              option: Program
+      - type: conditional
+        conditions:
+          - entity: switch.dom_termostat_setting
+            state_not: 'on'
+        card:
+          show_name: false
+          show_icon: true
+          type: button
+          tap_action:
+            action: none
+          entity: switch.dom_termostat_lock
+          icon_height: 20px
+          hold_action:
+            action: toggle
+      - type: horizontal-stack
+        cards:
+          - type: conditional
+            conditions:
+              - entity: switch.dom_termostat_setting_points
+                state_not: 'on'
+            card:
+              show_name: false
+              show_icon: true
+              type: button
+              tap_action:
+                action: none
+              entity: switch.dom_termostat_setting
+              icon_height: 20px
+              hold_action:
+                action: toggle
+          - type: conditional
+            conditions:
+              - entity: switch.dom_termostat_work_points
+                state: 'off'
+              - entity: switch.dom_termostat_week_points
+                state: 'off'
+              - entity: switch.dom_termostat_setting
+                state: 'on'
+            card:
+              show_name: false
+              show_icon: true
+              type: button
+              tap_action:
+                action: none
+              entity: switch.dom_termostat_setting_points
+              icon_height: 20px
+              hold_action:
+                action: toggle
+  - type: conditional
+    conditions:
+      - entity: switch.dom_termostat_setting
+        state: 'on'
+      - entity: switch.dom_termostat_setting_points
+        state: 'off'
+    card:
+      type: entities
+      entities:
+        - entity: select.dom_termostat_options_control
+        - entity: number.dom_termostat_calibration_sensor
+        - entity: switch.dom_termostat_high_protection
+        - entity: number.dom_termostat_high_external
+        - entity: switch.dom_termostat_low_protection
+        - entity: number.dom_termostat_low_external
+        - entity: number.dom_termostat_working_hysteresis
+        - entity: number.dom_termostat_upper_hysteresis_external
+        - entity: select.dom_termostat_turn_state
+        - entity: number.dom_termostat_max_temperature
+        - entity: number.dom_termostat_min_temperature
+        - entity: select.dom_termostat_select_week
+      show_header_toggle: false
+  - type: conditional
+    conditions:
+      - entity: switch.dom_termostat_setting_points
+        state: 'on'
+    card:
+      type: vertical-stack
+      cards:
+        - type: conditional
+          conditions:
+            - entity: select.dom_termostat_select_week
+              state_not: 7 days
+            - entity: switch.dom_termostat_week_points
+              state: 'off'
+          card:
+            type: vertical-stack
+            cards:
+              - type: horizontal-stack
+                cards:
+                  - show_name: true
+                    show_icon: true
+                    type: button
+                    tap_action:
+                      action: none
+                    entity: switch.dom_termostat_work_points
+                    icon_height: 20px
+                    hold_action:
+                      action: toggle
+                    name: workers
+                  - type: conditional
+                    conditions:
+                      - entity: switch.dom_termostat_cansel
+                        state: 'on'
+                    card:
+                      type: horizontal-stack
+                      cards:
+                        - show_name: false
+                          show_icon: true
+                          type: button
+                          tap_action:
+                            action: none
+                          entity: switch.dom_termostat_cansel
+                          icon_height: 20px
+                          hold_action:
+                            action: toggle
+                        - show_name: false
+                          show_icon: true
+                          type: button
+                          tap_action:
+                            action: none
+                          entity: switch.dom_termostat_save
+                          icon_height: 20px
+                          hold_action:
+                            action: toggle
+              - type: conditional
+                conditions:
+                  - entity: switch.dom_termostat_work_points
+                    state: 'on'
+                card:
+                  type: vertical-stack
+                  cards:
+                    - show_name: false
+                      show_icon: true
+                      show_state: true
+                      type: glance
+                      entities:
+                        - number.dom_termostat_point_hour_1
+                        - number.dom_termostat_point_minutes_1
+                        - number.dom_termostat_point_temp_1
+                    - show_name: false
+                      show_icon: true
+                      show_state: true
+                      type: glance
+                      entities:
+                        - number.dom_termostat_point_hour_2
+                        - number.dom_termostat_point_minutes_2
+                        - number.dom_termostat_point_temp_2
+                    - show_name: false
+                      show_icon: true
+                      show_state: true
+                      type: glance
+                      entities:
+                        - number.dom_termostat_point_hour_3
+                        - number.dom_termostat_point_minutes_3
+                        - number.dom_termostat_point_temp_3
+                    - show_name: false
+                      show_icon: true
+                      show_state: true
+                      type: glance
+                      entities:
+                        - number.dom_termostat_point_hour_4
+                        - number.dom_termostat_point_minutes_4
+                        - number.dom_termostat_point_temp_4
+                    - show_name: false
+                      show_icon: true
+                      show_state: true
+                      type: glance
+                      entities:
+                        - number.dom_termostat_point_hour_5
+                        - number.dom_termostat_point_minutes_5
+                        - number.dom_termostat_point_temp_5
+                    - show_name: false
+                      show_icon: true
+                      show_state: true
+                      type: glance
+                      entities:
+                        - number.dom_termostat_point_hour_6
+                        - number.dom_termostat_point_minutes_6
+                        - number.dom_termostat_point_temp_6
+        - type: conditional
+          conditions:
+            - entity: select.dom_termostat_select_week
+              state_not: 7 days
+            - entity: switch.dom_termostat_work_points
+              state: 'off'
+          card:
+            type: vertical-stack
+            cards:
+              - type: horizontal-stack
+                cards:
+                  - show_name: true
+                    show_icon: true
+                    type: button
+                    tap_action:
+                      action: none
+                    entity: switch.dom_termostat_week_points
+                    icon_height: 20px
+                    hold_action:
+                      action: toggle
+                    name: weekend
+                  - type: conditional
+                    conditions:
+                      - entity: switch.dom_termostat_cansel
+                        state: 'on'
+                    card:
+                      type: horizontal-stack
+                      cards:
+                        - show_name: false
+                          show_icon: true
+                          type: button
+                          tap_action:
+                            action: none
+                          entity: switch.dom_termostat_cansel
+                          icon_height: 20px
+                          hold_action:
+                            action: toggle
+                        - show_name: false
+                          show_icon: true
+                          type: button
+                          tap_action:
+                            action: none
+                          entity: switch.dom_termostat_save
+                          icon_height: 20px
+                          hold_action:
+                            action: toggle
+              - type: conditional
+                conditions:
+                  - entity: switch.dom_termostat_week_points
+                    state: 'on'
+                card:
+                  type: vertical-stack
+                  cards:
+                    - show_name: false
+                      show_icon: true
+                      show_state: true
+                      type: glance
+                      entities:
+                        - number.dom_termostat_point_hour_1
+                        - number.dom_termostat_point_minutes_1
+                        - number.dom_termostat_point_temp_1
+                    - show_name: false
+                      show_icon: true
+                      show_state: true
+                      type: glance
+                      entities:
+                        - number.dom_termostat_point_hour_2
+                        - number.dom_termostat_point_minutes_2
+                        - number.dom_termostat_point_temp_2
+                    - show_name: false
+                      show_icon: true
+                      show_state: true
+                      type: glance
+                      entities:
+                        - number.dom_termostat_point_hour_3
+                        - number.dom_termostat_point_minutes_3
+                        - number.dom_termostat_point_temp_3
+                    - show_name: false
+                      show_icon: true
+                      show_state: true
+                      type: glance
+                      entities:
+                        - number.dom_termostat_point_hour_4
+                        - number.dom_termostat_point_minutes_4
+                        - number.dom_termostat_point_temp_4
+                    - show_name: false
+                      show_icon: true
+                      show_state: true
+                      type: glance
+                      entities:
+                        - number.dom_termostat_point_hour_5
+                        - number.dom_termostat_point_minutes_5
+                        - number.dom_termostat_point_temp_5
+                    - show_name: false
+                      show_icon: true
+                      show_state: true
+                      type: glance
+                      entities:
+                        - number.dom_termostat_point_hour_6
+                        - number.dom_termostat_point_minutes_6
+                        - number.dom_termostat_point_temp_6
+        - type: conditional
+          conditions:
+            - entity: select.dom_termostat_select_week
+              state: 7 days
+          card:
+            type: vertical-stack
+            cards:
+              - type: horizontal-stack
+                cards:
+                  - show_name: true
+                    show_icon: true
+                    type: button
+                    tap_action:
+                      action: none
+                    entity: switch.dom_termostat_work_points
+                    icon_height: 20px
+                    hold_action:
+                      action: toggle
+                    name: 7 days
+                    icon: mdi:calendar-blank
+                  - type: conditional
+                    conditions:
+                      - entity: switch.dom_termostat_cansel
+                        state: 'on'
+                    card:
+                      type: horizontal-stack
+                      cards:
+                        - show_name: false
+                          show_icon: true
+                          type: button
+                          tap_action:
+                            action: none
+                          entity: switch.dom_termostat_cansel
+                          icon_height: 20px
+                          hold_action:
+                            action: toggle
+                        - show_name: false
+                          show_icon: true
+                          type: button
+                          tap_action:
+                            action: none
+                          entity: switch.dom_termostat_save
+                          icon_height: 20px
+                          hold_action:
+                            action: toggle
+              - type: conditional
+                conditions:
+                  - entity: switch.dom_termostat_work_points
+                    state: 'on'
+                card:
+                  type: vertical-stack
+                  cards:
+                    - show_name: false
+                      show_icon: true
+                      show_state: true
+                      type: glance
+                      entities:
+                        - number.dom_termostat_point_hour_1
+                        - number.dom_termostat_point_minutes_1
+                        - number.dom_termostat_point_temp_1
+                    - show_name: false
+                      show_icon: true
+                      show_state: true
+                      type: glance
+                      entities:
+                        - number.dom_termostat_point_hour_2
+                        - number.dom_termostat_point_minutes_2
+                        - number.dom_termostat_point_temp_2
+                    - show_name: false
+                      show_icon: true
+                      show_state: true
+                      type: glance
+                      entities:
+                        - number.dom_termostat_point_hour_3
+                        - number.dom_termostat_point_minutes_3
+                        - number.dom_termostat_point_temp_3
+                    - show_name: false
+                      show_icon: true
+                      show_state: true
+                      type: glance
+                      entities:
+                        - number.dom_termostat_point_hour_4
+                        - number.dom_termostat_point_minutes_4
+                        - number.dom_termostat_point_temp_4
+                    - show_name: false
+                      show_icon: true
+                      show_state: true
+                      type: glance
+                      entities:
+                        - number.dom_termostat_point_hour_5
+                        - number.dom_termostat_point_minutes_5
+                        - number.dom_termostat_point_temp_5
+                    - show_name: false
+                      show_icon: true
+                      show_state: true
+                      type: glance
+                      entities:
+                        - number.dom_termostat_point_hour_6
+                        - number.dom_termostat_point_minutes_6
+                        - number.dom_termostat_point_temp_6

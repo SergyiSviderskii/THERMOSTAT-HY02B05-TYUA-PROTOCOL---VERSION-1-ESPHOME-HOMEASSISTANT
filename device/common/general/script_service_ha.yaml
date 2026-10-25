@@ -1,0 +1,16 @@
+script:
+  - id: service_ha
+    parameters:
+      # Изменили std::string на обычный string 
+      message_data: string
+      title_data: string    
+    #   message_data: std::string
+    #   title_data: std::string
+    then:
+      - homeassistant.service:           
+          service: script.notify_message
+          data:
+            message: !lambda return message_data;
+            title: !lambda return title_data; 
+
+            

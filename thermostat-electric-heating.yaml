@@ -1,0 +1,13 @@
+# HY02B05 TYUA (tywe3s)) PROTOCOL VERSION 1
+substitutions:
+  hostname: "thermostat-electric-heating"   
+  #key_api: ""  
+  password_ota: "" 
+  esphome_service: "switch_heater_house_b"
+  reload_config: "climate.dom_termostat"
+  installation_area: "дом - "
+  
+
+packages:
+  - !include device/common/function/thermostats/hy02b05_version_1.yaml  
+  - !include device/thermostats/general.yaml  

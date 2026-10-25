@@ -1,0 +1,164 @@
+substitutions:
+  bssid_1: !secret wifi_bssid_house_hall
+  bssid_2: !secret wifi_bssid_house_bedroom_home
+  bssid_3: !secret wifi_bssid_house_bedroom_d
+  bssid_4: !secret wifi_bssid_house_bedroom
+  bssid_5: !secret wifi_bssid_house_living_room
+  bssid_6: !secret wifi_bssid_house_canopy
+  bssid_7: !secret wifi_bssid_house_garret
+  bssid_8: !secret wifi_bssid_house_garage
+  bssid_9: !secret wifi_bssid_bath_garret
+  bssid_10: !secret wifi_bssid_street_bath_left
+  bssid_11: !secret wifi_bssid_plus 
+  wifi_bssid_1_: !secret wifi_bssid_1_ 
+  wifi_bssid_2_: !secret wifi_bssid_2_    
+  wifi_bssid_3_: !secret wifi_bssid_3_    
+  wifi_bssid_4_: !secret wifi_bssid_4_    
+  wifi_bssid_5_: !secret wifi_bssid_5_ 
+  wifi_bssid_6_: !secret wifi_bssid_6_ 
+  wifi_bssid_7_: !secret wifi_bssid_7_    
+  wifi_bssid_8_: !secret wifi_bssid_8_  
+  wifi_bssid_9_: !secret wifi_bssid_9_    
+  wifi_bssid_10_: !secret wifi_bssid_10_ 
+  wifi_bssid_11_: !secret wifi_bssid_11_ 
+  
+
+wifi:
+  post_connect_roaming: false
+  networks:
+  
+    - ssid: !secret wifi_ssid_house_hall
+      password: !secret wifi_password_iot
+
+    - ssid: !secret wifi_ssid_house_bedroom
+      password: !secret wifi_password_iot
+  
+    - ssid: !secret wifi_ssid_house_bedroom_d
+      password: !secret wifi_password_iot
+  
+    - ssid: !secret wifi_ssid_house_living_room 
+      password: !secret wifi_password_iot
+ 
+    - ssid: !secret wifi_ssid_house_canopy 
+      password: !secret wifi_password_iot
+      
+    # - ssid: !secret wifi_ssid_house_garret
+    #   password: !secret wifi_password_home      
+  
+    - ssid: !secret wifi_ssid_house_garage
+      password: !secret wifi_password_iot
+   
+    - ssid: !secret wifi_ssid_bath_garret    
+      password: !secret wifi_password_iot
+  
+    - ssid: !secret wifi_ssid_street_bath_left    
+      password: !secret wifi_password_iot
+      
+    - ssid: !secret wifi_ssid_plus
+      password: !secret wifi_password_iot        
+      
+#   ssid: $wifi_ssid
+#   password: $wifi_password_iot
+#   fast_connect: true
+   
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+#   ap:
+#     ssid: $hostname
+#     password: !secret wifi_ap_password  
+
+
+#captive_portal:  
+
+
+# web_server:
+#   port: 80
+#   version: 2    # Используем стабильную 2-ю версию интерфейса
+#   local: true   # Самое главное! Все скрипты зашиваются в память, 
+#                 # устройству не нужен интернет для работы страницы!  
+#   # Разрешаем браузеру подключаться к устройству из локальной сети:
+#   allowed_origins:
+#     - "*"
+
+esphome:
+  name: $hostname
+  friendly_name: $friendly_name  
+  area: $installation_area
+    
+ota:
+  - platform: esphome
+    id: my_ota
+    password: "$password_ota" 
+
+
+ # Enable logging
+logger:
+  level: NONE
+  baud_rate: $logger_baud_rate  
+
+
+sensor:
+  - platform: uptime
+    name: "Time work"
+    type: timestamp
+    id: uptime_s
+    
+  - platform: wifi_signal
+    name: "RSSI"    
+              
+
+switch:                 
+  - platform: restart
+    name: "Restarting"  
+    id: restarting
+
+
+text_sensor:
+  - platform: template 
+    name: "Access point"  
+    id: point_bssid
+    icon: mdi:router-wireless
+    update_interval: never
+      
+  - platform: version
+    name: "ESPHome Version"    
+
+  - platform: wifi_info
+    ip_address:
+      icon: mdi:ip  
+      name: "IP"   
+    ssid:
+      icon: mdi:wifi-lock 
+      name: "SSID"
+    mac_address:
+      name: "Mac Wifi"  
+    bssid:
+      name: "BSSID"  
+      id: bssid_point
+      on_raw_value:
+        then:
+          - if:
+              condition: 
+                lambda: |-
+                  return x != "" && x != "Нет данных"; 
+              then:
+                - text_sensor.template.publish:
+                    id: point_bssid
+                    state: !lambda |-
+                      if (strcasecmp(x.c_str(), "${bssid_1}") == 0) return "${wifi_bssid_1_}";
+                      if (strcasecmp(x.c_str(), "${bssid_2}") == 0) return "${wifi_bssid_2_}";
+                      if (strcasecmp(x.c_str(), "${bssid_3}") == 0) return "${wifi_bssid_3_}";
+                      if (strcasecmp(x.c_str(), "${bssid_4}") == 0) return "${wifi_bssid_4_}";
+                      if (strcasecmp(x.c_str(), "${bssid_5}") == 0) return "${wifi_bssid_5_}";
+                      if (strcasecmp(x.c_str(), "${bssid_6}") == 0) return "${wifi_bssid_6_}";
+                      if (strcasecmp(x.c_str(), "${bssid_7}") == 0) return "${wifi_bssid_7_}";  
+                      if (strcasecmp(x.c_str(), "${bssid_8}") == 0) return "${wifi_bssid_8_}";
+                      if (strcasecmp(x.c_str(), "${bssid_9}") == 0) return "${wifi_bssid_9_}";
+                      if (strcasecmp(x.c_str(), "${bssid_10}") == 0) return "${wifi_bssid_10_}";
+                      if (strcasecmp(x.c_str(), "${bssid_11}") == 0) return "${wifi_bssid_11_}";
+                      
+                      return "Неизвестная точка";
+
+
+
+

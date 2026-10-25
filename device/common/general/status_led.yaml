@@ -1,0 +1,53 @@
+light:
+  - platform: status_led
+    id: status_led_on_off
+    # Если на конкретном устройстве лампа НЕ нужна в HA — 
+    # этот параметр скроет её, и она останется просто системным светодиодом
+    internal: $internal_light_mode
+    restore_mode: ALWAYS_OFF
+    pin:
+      number: $status_led
+      inverted: $status_inverted
+
+# так как двадцать шестом году сломали эту сущность пришлось изменить на этот код
+      
+# # Старый нерабочий блок удаляем, вместо него вставляем этот код:
+# light:
+#   - platform: binary
+#     output: universal_led_output
+#     id: status_led_on_off
+#     internal: $internal_light_mode
+#     restore_mode: ALWAYS_OFF
+
+# output:
+#   - platform: gpio
+#     id: universal_led_output
+#     pin:
+#       number: $status_led
+#       inverted: $status_inverted
+
+# # Этот блок берет на себя мигание при ошибках вместо сломанного движка ESPHome
+# interval:
+#   - interval: 1s
+#     then:
+#       if:
+#         condition:
+#           or:
+#             - not:
+#                 wifi.connected:
+#             - not:
+#                 api.connected:
+#         then:
+#           # Если связи нет — диод мигает (переключается) раз в секунду
+#           - light.toggle: status_led_on_off
+#         else:
+#           # Если сеть в порядке — диод выключается по вашему правилу ALWAYS_OFF
+#           # (Если на каком-то устройстве вы включите его из HA — автоматика не помешает)
+#           if:
+#             condition:
+#               # Проверяем, не пытается ли сеть отвалиться прямо сейчас
+#               wifi.connected:
+#             then:
+#               # Заставляем систему уважать текущее состояние из Home Assistant
+#               - logger.log: "Система в норме, управление диодом отдано пользователю"
+      

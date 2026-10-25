@@ -1,0 +1,13 @@
+sensor:
+  # Внутренний датчик напряжения питания самого чипа ESP
+  - platform: adc
+    pin: VCC
+    name: "ESP Voltage"
+    unit_of_measurement: "V"
+    accuracy_decimals: 2
+    update_interval: 10s
+    filters:
+      # Небольшое усреднение, чтобы не ловить микросекундные шумы
+      - sliding_window_moving_average:
+          window_size: 5
+          send_every: 1

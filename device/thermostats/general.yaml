@@ -1,0 +1,6 @@
+packages:
+  - !include ../common/general/components.yaml
+  - !include ../common/general/wifi_wpa2.yaml 
+  - !include ../common/general/script_service_ha.yaml 
+  - !include ../common/general/api.yaml
+  - !include ../common/general/only_time.yaml  
